@@ -1,9 +1,9 @@
 locals {
   traffic_manager_endpoints = [
     {
-      name        = "${local.backend_name}"
-      target      = "${data.null_data_source.waf-pip.outputs["pip"]}"
-      priority    = "3"
+      name        = "${var.backend_name}"
+      target      = "${var.backend_pip}"
+      priority    = "${var.priority}"
       status      = "Enabled"
       host_header = "${var.public_hostname}" // // This has to be the same hostname used in the listeners of the WAF
     }
@@ -39,14 +39,7 @@ data "template_file" "traffic_manager_template" {
 resource "azurerm_template_deployment" "traffic_manager_enpoints" {
   template_body       = "${data.template_file.traffic_manager_template.rendered}"
   name                = "${var.product}-${var.env}-endpoints"
-  resource_group_name = "${var.product}-shared-infrastructure-${var.env}"
+  resource_group_name = "${var.resource_group}"
   deployment_mode     = "Incremental"
   parameters_body     = "${data.template_file.traffic_manager_parameters.rendered}"
-}
-
-data "null_data_source" "waf-pip" {
-  inputs = {
-    pip = "${module.waf.public_ip_fqdn}"     
-  }
-  depends_on = ["module.waf"]
 }
